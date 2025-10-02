@@ -3,7 +3,7 @@ package notification
 import (
 	"fmt"
 
-	ratelimit "github.com/seu-usuario/rate-limited-notification-service/rate-limit"
+	ratelimit "github.com/seu-usuario/rate-limited-notification-service/ratelimit"
 )
 
 type NotificationService interface {
@@ -13,6 +13,13 @@ type NotificationService interface {
 type ServiceImpl struct {
 	Limiter ratelimit.RateLimiter
 	Gateway Gateway
+}
+
+func NewServiceImpl(limiter ratelimit.RateLimiter, gateway Gateway) *ServiceImpl {
+	return &ServiceImpl{
+		Limiter: limiter,
+		Gateway: gateway,
+	}
 }
 
 func (s *ServiceImpl) Send(notifyType, userId, message string) {

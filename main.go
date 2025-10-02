@@ -5,45 +5,39 @@ import (
 	"time"
 
 	"github.com/seu-usuario/rate-limited-notification-service/notification"
-	ratelimit "github.com/seu-usuario/rate-limited-notification-service/rate-limit"
+	ratelimit "github.com/seu-usuario/rate-limited-notification-service/ratelimit"
 )
 
 func main() {
-	fmt.Println("--Initializing service of rate limit notification--")
+	fmt.Println("--Initializing Rate-Limited Notification Service--")
 
 	rules := map[string]ratelimit.Rule{
-		"Status":     {Limit: 2, Duration: time.Minute},
-		"News":       {Limit: 1, Duration: 24 * time.Hour},
-		"Markenting": {Limit: 3, Duration: 3 * time.Hour},
+		"Status":    {Limit: 2, Duration: time.Minute},
+		"News":      {Limit: 1, Duration: 24 * time.Hour},
+		"Marketing": {Limit: 3, Duration: 3 * time.Hour},
 	}
 
-	limiter := ratelimit.NewLimiter(rules)
+	realClock := ratelimit.RealClock{}
+
+	limiter := ratelimit.NewLimiter(rules, realClock)
 	gateway := &notification.EmailGateway{}
 
-	service := &notification.ServiceImpl{
-		Limiter: limiter,
-		Gateway: gateway,
-	}
+	service := notification.NewServiceImpl(limiter, gateway)
 
-	fmt.Println("\n--- Teste STATUS (Limite: 2 por minuto) ---")
+	fmt.Println("\n--- Test: STATUS (Limit: 2 per minute) ---")
 
 	service.Send("Status", "user-A", "Update 1")
-
 	service.Send("Status", "user-A", "Update 2")
-
 	service.Send("Status", "user-A", "Update 3")
 
 	service.Send("Status", "user-B", "Update 1 B")
 
-	fmt.Println("\n--- Teste NEWS (Limite: 1 por dia) ---")
+	fmt.Println("\n--- Test: NEWS (Limit: 1 per day) ---")
 
 	service.Send("News", "user-C", "Daily News 1")
-
 	service.Send("News", "user-C", "Daily News 2")
 
-	fmt.Println("\n--- Teste Janela Deslizante (Simulando 3 segundos depois) ---")
+	fmt.Println("\n--- Test: Sliding Window (Immediate Re-check) ---")
 
-	time.Sleep(3 * time.Second)
-
-	service.Send("Status", "user-A", "Update 4 após 3s")
+	service.Send("Status", "user-A", "Update 4 immediately after")
 }
